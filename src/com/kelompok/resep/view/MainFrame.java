@@ -27,9 +27,7 @@ public class MainFrame extends JFrame {
         add(mainPanel);
     }
 
-    // =====================================================
     // FORM INPUT
-    // =====================================================
     private JPanel formResep() {
 
         JPanel panel = new JPanel(new BorderLayout());
@@ -103,9 +101,7 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    // =====================================================
     // OUTPUT PANEL
-    // =====================================================
     private JPanel outputPanel() {
 
         JPanel panel = new JPanel(new BorderLayout());
@@ -131,9 +127,7 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    // =====================================================
-    // MAIN
-    // =====================================================
+    // MAIN    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new MainFrame().setVisible(true));
     }
