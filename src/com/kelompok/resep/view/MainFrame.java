@@ -1,31 +1,4 @@
-[13.52, 16/12/2025] rezky SIIO'24: package com.kelompok.resep.view;
-
-import com.kelompok.resep.logic.RecipeManager;
-import com.kelompok.resep.model.Recipe;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.ArrayList;
-
-public class MainFrame extends JFrame {
-
-    private CardLayout card;
-    private JPanel mainPanel;
-
-    // Komponen Input
-    private JTextField inpNamaResep, inpTipe, inpBahan, inpKalori;
-    private JTextArea inpLangkah;
-    private JTextArea displayBahanSementara; // Buat nampilin bahan yang barusan diinput
-    
-    // Komponen Output (Tabel)
-    private JTable tabelOutput;
-    private DefaultTableModel tableModel;
-
-    // Logic & Data
-    private RecipeManager manager;
-    private ArrayList<String[]> tempBahanList; // Pen…
-[15.49, 16/12/2025] rezky SIIO'24: package com.kelompok.resep.view;
+package com.kelompok.resep.view;
 
 import com.kelompok.resep.logic.RecipeManager;
 import com.kelompok.resep.model.Recipe;
