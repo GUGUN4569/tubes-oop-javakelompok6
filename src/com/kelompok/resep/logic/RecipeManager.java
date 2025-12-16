@@ -12,11 +12,12 @@ import java.util.Optional;
  */
 public class RecipeManager {
     private List<Recipe> daftarResep;
-    private static final String FILE_PATH = "data/resep_data.txt"; // Konstanta agar mudah diubah
+    private static final String FILE_PATH = "data/resep_data.txt";
 
     public RecipeManager() {
         this.daftarResep = new ArrayList<>();
         ensureDataDirectoryExists();
+        loadData(); // <--- BARU: Load data saat Manager dibuat
     }
 
     // --- CRUD OPERATIONS ---
@@ -24,7 +25,18 @@ public class RecipeManager {
     public void tambahResep(Recipe r) {
         if (r != null) {
             daftarResep.add(r);
+            simpanData(); // <--- BARU: Simpan data setiap ada penambahan resep
             System.out.println("[INFO] Resep " + r.getNama() + " berhasil ditambahkan.");
+        }
+    }
+    
+    // Metode Hapus Resep (Diperlukan oleh MainFrame)
+    public void hapusResep(int index) {
+        if (index >= 0 && index < daftarResep.size()) {
+            String nama = daftarResep.get(index).getNama();
+            daftarResep.remove(index);
+            simpanData(); // <--- BARU: Simpan data setelah penghapusan
+            System.out.println("[INFO] Resep " + nama + " berhasil dihapus.");
         }
     }
 
@@ -37,7 +49,7 @@ public class RecipeManager {
         Optional<Recipe> result = daftarResep.stream()
                 .filter(r -> r.getNama().equalsIgnoreCase(nama))
                 .findFirst();
-        return result.orElse(null); // Return null jika tidak ketemu
+        return result.orElse(null);
     }
 
     // --- FILE I/O OPERATIONS ---
@@ -54,11 +66,13 @@ public class RecipeManager {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Recipe r : daftarResep) {
                 // Format CSV custom: Nama;Kategori;Langkah;TotalKalori
-                String line = String.format("%s;%s;%s;%.2f", 
+                // PENTING: Untuk keperluan load, total kalori di sini tidak digunakan, 
+                // karena total kalori harus dihitung saat loading bahan (yang belum Anda simpan).
+                // Kita simpan Nama;Kategori;Langkah saja untuk load sederhana.
+                String line = String.format("%s;%s;%s", 
                     r.getNama(), 
-                    r.getKategori(), 
-                    r.getLangkahPembuatan().replace("\n", " "), // Sanitasi newline
-                    r.hitungTotalKalori()
+                    r.getTipe(), // Ganti getKategori() menjadi getTipe() jika di Recipe menggunakan getTipe
+                    r.getLangkahPembuatan().replace("\n", " ")
                 );
                 writer.write(line);
                 writer.newLine();
@@ -69,23 +83,25 @@ public class RecipeManager {
         }
     }
 
-    // Placeholder untuk Load Data (bisa dikembangkan nanti)
     public void loadData() {
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
 
+        // Kosongkan list yang ada sebelum load
+        daftarResep.clear(); 
+
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // Logika parsing sederhana (split by ;)
                 String[] parts = line.split(";");
                 if (parts.length >= 3) {
                     Recipe r = new Recipe(parts[0], parts[1], parts[2]);
-                    // Note: Load bahan secara detail butuh struktur file lebih kompleks (JSON/XML)
-                    // Untuk tugas ini, kita load basic info dulu.
+                    // Karena kita tidak menyimpan detail bahan, resep yang diload memiliki total kalori 0.
+                    // Ini cukup untuk menampilkan Nama, Kategori, dan Langkah di GUI.
                     daftarResep.add(r);
                 }
             }
+            System.out.println("[SUCCESS] Data berhasil diload: " + daftarResep.size() + " resep.");
         } catch (IOException e) {
             System.err.println("[ERROR] Gagal membaca data: " + e.getMessage());
         }

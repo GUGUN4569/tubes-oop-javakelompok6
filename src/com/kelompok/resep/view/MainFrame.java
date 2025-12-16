@@ -16,7 +16,7 @@ public class MainFrame extends JFrame {
     // Komponen Input
     private JTextField inpNamaResep, inpTipe, inpBahan, inpKalori;
     private JTextArea inpLangkah;
-    private JTextArea displayBahanSementara; // Buat nampilin bahan yang barusan diinput
+    private JTextArea displayBahanSementara;
     
     // Komponen Output (Tabel)
     private JTable tabelOutput;
@@ -24,14 +24,14 @@ public class MainFrame extends JFrame {
 
     // Logic & Data
     private RecipeManager manager;
-    private ArrayList<String[]> tempBahanList; // Penampung bahan sementara sebelum disave
+    private ArrayList<String[]> tempBahanList;
 
     public MainFrame() {
-        manager = new RecipeManager(); // Load database
+        manager = new RecipeManager();
         tempBahanList = new ArrayList<>();
 
         setTitle("Kelompok 6 - Aplikasi Resep Makanan & Nutrisi");
-        setSize(800, 600); // Saya gedein dikit biar lega
+        setSize(800, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -44,18 +44,59 @@ public class MainFrame extends JFrame {
         add(mainPanel);
     }
 
-    // FORM INPUT
+    // --- HELPER METHODS ---
+
+    private void resetForm() {
+        inpNamaResep.setText("");
+        inpTipe.setText("");
+        inpLangkah.setText("");
+        inpBahan.setText("");
+        inpKalori.setText("");
+        displayBahanSementara.setText("");
+        tempBahanList.clear();
+    }
+
+    private void refreshTable() {
+        // 1. Hapus semua baris data lama
+        tableModel.setRowCount(0);
+
+        // 2. Ambil data resep terbaru dari manager
+        for (Recipe resep : manager.getAllResep()) {
+            
+            // 3. Logika penentuan Status Kesehatan
+            String statusKesehatan;
+            double kalori = resep.hitungTotalKalori();
+            
+            if (kalori < 300) {
+                statusKesehatan = "Sehat";
+            } else if (kalori < 600) {
+                statusKesehatan = "Sedang";
+            } else {
+                statusKesehatan = "Berat";
+            }
+
+            // 4. Tambahkan baris baru ke tabel
+            tableModel.addRow(new Object[]{
+                resep.getNama(),      // PERBAIKAN: Sesuai method di FoodItem/Recipe
+                resep.getKategori(),  // PERBAIKAN: Sesuai method di FoodItem/Recipe
+                kalori,
+                statusKesehatan
+            });
+        }
+    }
+
+    // --- FORM INPUT PANEL ---
     private JPanel formResep() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout()); // Variabel panel didefinisikan di sini
 
         // HEADER
         JPanel header = new JPanel(new GridLayout(2, 1));
-        header.setBackground(new Color(50, 50, 200)); // Warna Header Biru
+        header.setBackground(new Color(50, 50, 200));
         JLabel judul = new JLabel("Form Input Resep - Kelompok 6", SwingConstants.CENTER);
         judul.setFont(new Font("Arial", Font.BOLD, 22));
         judul.setForeground(Color.WHITE);
 
-        JLabel anggota = new JLabel("Anggota: GUGUN | REZKI | FAKHRI", SwingConstants.CENTER);
+        JLabel anggota = new JLabel("Anggota: Kelompok 6", SwingConstants.CENTER);
         anggota.setForeground(Color.WHITE);
 
         header.add(judul);
@@ -73,7 +114,7 @@ public class MainFrame extends JFrame {
         inpNamaResep = new JTextField(20);
         gbc.gridx = 1; form.add(inpNamaResep, gbc);
 
-        // Baris 2: Tipe/Kategorigit 
+        // Baris 2: Kategori
         gbc.gridx = 0; gbc.gridy = 1; form.add(new JLabel("Kategori (Pagi/Siang/Malam):"), gbc);
         inpTipe = new JTextField(20);
         gbc.gridx = 1; form.add(inpTipe, gbc);
@@ -128,15 +169,17 @@ public class MainFrame extends JFrame {
         JButton btnLihatData = new JButton("Lihat Tabel Data >>");
 
         btnExit.addActionListener(e -> System.exit(0));
+
         btnLihatData.addActionListener(e -> {
-            refreshTable(); // Update tabel sebelum pindah halaman
+            refreshTable();
             card.show(mainPanel, "output");
+        });
 
         footer.add(btnExit);
         footer.add(btnLihatData);
         panel.add(footer, BorderLayout.SOUTH);
 
-        // --- ACTION LISTENERS (LOGIC) ---
+        // --- ACTION LISTENERS LOGIC ---
 
         // 1. Logic Tambah Bahan
         btnTambahBahan.addActionListener(e -> {
@@ -149,17 +192,14 @@ public class MainFrame extends JFrame {
             }
 
             try {
-                double kal = Double.parseDouble(kalB); // Validasi angka
-                // Simpan ke array sementara
+                double kal = Double.parseDouble(kalB);
                 tempBahanList.add(new String[]{namaB, String.valueOf(kal)});
                 
-                // Update tampilan
                 displayBahanSementara.append("- " + namaB + " (" + kal + " kkal)\n");
                 
-                // Reset field bahan
                 inpBahan.setText("");
                 inpKalori.setText("");
-                inpBahan.requestFocus(); // Balikin kursor ke field bahan
+                inpBahan.requestFocus();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Kalori harus berupa angka! (Contoh: 100.5)");
             }
@@ -176,18 +216,17 @@ public class MainFrame extends JFrame {
                 return;
             }
 
-            // A. Buat Object Resep
+            // Create Recipe Object
             Recipe resepBaru = new Recipe(nama, tipe, langkah);
 
-            // B. Masukin Bahan-bahan dari List Sementara ke Object Resep
+            // Add Ingredients
             for (String[] bahan : tempBahanList) {
                 resepBaru.tambahBahan(bahan[0], Double.parseDouble(bahan[1]));
             }
 
-            // C. Kirim ke Manager (Simpan ke File)
+            // Save to Manager
             manager.tambahResep(resepBaru);
 
-            // D. Feedback & Reset
             JOptionPane.showMessageDialog(this, "Berhasil! Resep " + nama + " disimpan.");
             resetForm();
         });
@@ -195,9 +234,9 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    // OUTPUT PANEL
+    // --- OUTPUT PANEL ---
     private JPanel outputPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout()); // Variabel panel didefinisikan di sini
 
         // Judul
         JLabel lblTitle = new JLabel("Daftar Resep Tersimpan", SwingConstants.CENTER);
@@ -205,13 +244,13 @@ public class MainFrame extends JFrame {
         lblTitle.setBorder(BorderFactory.createEmptyBorder(10,0,10,0));
         panel.add(lblTitle, BorderLayout.NORTH);
 
-        // Tabel Data (Sesuai Syarat Tugas)
+        // Tabel Data
         String[] kolom = {"Nama Resep", "Kategori", "Total Kalori", "Status Kesehatan"};
         tableModel = new DefaultTableModel(kolom, 0);
         tabelOutput = new JTable(tableModel);
         panel.add(new JScrollPane(tabelOutput), BorderLayout.CENTER);
 
-        // Tombol Kembali
+        // Footer Tombol
         JPanel footer = new JPanel();
         JButton btnBack = new JButton("<< Kembali ke Input");
         JButton btnDelete = new JButton("Hapus Baris Terpilih");
@@ -235,7 +274,7 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    // MAIN    
+    // MAIN 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new MainFrame().setVisible(true));
     }
