@@ -44,7 +44,7 @@ public class MainFrame extends JFrame {
         add(mainPanel);
     }
 
-    // --- PANEL 1: FORM INPUT ---
+    // FORM INPUT
     private JPanel formResep() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -195,7 +195,7 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    // --- PANEL 2: OUTPUT (TABEL) ---
+    // OUTPUT PANEL
     private JPanel outputPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -235,31 +235,8 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    // --- HELPER METHODS ---
-
-    private void resetForm() {
-        inpNamaResep.setText("");
-        inpTipe.setText("");
-        inpLangkah.setText("");
-        inpBahan.setText("");
-        inpKalori.setText("");
-        displayBahanSementara.setText("");
-        tempBahanList.clear(); // Kosongkan list bahan sementara
-    }
-
-    private void refreshTable() {
-        // Hapus data lama di tabel
-        tableModel.setRowCount(0);
-
-        // Ambil data terbaru dari Manager
-        for (Recipe r : manager.getAllResep()) {
-            Object[] row = {
-                r.getNama(),
-                r.getKategori(),
-                r.hitungTotalKalori(), // Menggunakan Method OOP
-                r.cekStatusKesehatan() // Menggunakan Method OOP
-            };
-            tableModel.addRow(row);
-        }
+    // MAIN    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new MainFrame().setVisible(true));
     }
 }

@@ -1,5 +1,6 @@
-package src.com.kelompok.resep.model;
+package com.kelompok.resep.model;
 
-public class Nutrizable {
-    
+public interface Nutrizable {
+    double hitungTotalKalori();
+    String cekStatusKesehatan();
 }
