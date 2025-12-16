@@ -12,13 +12,11 @@ import java.util.Optional;
  */
 public class RecipeManager {
     private List<Recipe> daftarResep;
-    // Pastikan path ini benar. Kalau error, coba ganti jadi absolute path atau cukup "resep_data.txt"
-    private static final String FILE_PATH = "data/resep_data.txt"; 
+    private static final String FILE_PATH = "data/resep_data.txt"; // Konstanta agar mudah diubah
 
     public RecipeManager() {
         this.daftarResep = new ArrayList<>();
         ensureDataDirectoryExists();
-        loadData(); // PERBAIKAN 1: Panggil load data saat aplikasi mulai!
     }
 
     // --- CRUD OPERATIONS ---
@@ -26,15 +24,17 @@ public class RecipeManager {
     public void tambahResep(Recipe r) {
         if (r != null) {
             daftarResep.add(r);
-            simpanData(); // PERBAIKAN 2: Auto-save setiap kali nambah resep!
-            System.out.println("[INFO] Resep " + r.getNama() + " berhasil ditambahkan & disimpan.");
+            System.out.println("[INFO] Resep " + r.getNama() + " berhasil ditambahkan.");
         }
     }
-
+    
+    // Metode Hapus Resep (Diperlukan oleh MainFrame)
     public void hapusResep(int index) {
         if (index >= 0 && index < daftarResep.size()) {
+            String nama = daftarResep.get(index).getNama();
             daftarResep.remove(index);
-            simpanData(); // Auto-save saat hapus
+            simpanData(); // <--- BARU: Simpan data setelah penghapusan
+            System.out.println("[INFO] Resep " + nama + " berhasil dihapus.");
         }
     }
 
@@ -61,14 +61,11 @@ public class RecipeManager {
     public void simpanData() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Recipe r : daftarResep) {
-                // Format: Nama;Kategori;Langkah;TotalKalori
-                // Kita ganti enter (\n) dengan spasi biar file txt tidak rusak
-                String langkahBersih = r.getLangkahPembuatan().replace("\n", " ");
-                
+                // Format CSV custom: Nama;Kategori;Langkah;TotalKalori
                 String line = String.format("%s;%s;%s;%.2f", 
                     r.getNama(), 
                     r.getKategori(), 
-                    langkahBersih,
+                    r.getLangkahPembuatan().replace("\n", " "), // Sanitasi newline
                     r.hitungTotalKalori()
                 );
                 writer.write(line);
@@ -84,30 +81,21 @@ public class RecipeManager {
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
 
+        // Kosongkan list yang ada sebelum load
+        daftarResep.clear(); 
+
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(";");
-                // Pastikan ada minimal 4 bagian (Nama, Kategori, Langkah, Kalori)
-                if (parts.length >= 4) {
-                    String nama = parts[0];
-                    String kategori = parts[1];
-                    String langkah = parts[2];
-                    double totalKalori = Double.parseDouble(parts[3]);
-
-                    Recipe r = new Recipe(nama, kategori, langkah);
-                    
-                    // PERBAIKAN 3: RESTORE KALORI
-                    // Karena kita tidak menyimpan detail bahan satu per satu di file txt,
-                    // kita masukkan total kalori sebagai satu "bahan gabungan" agar hitungan tetap benar.
-                    if (totalKalori > 0) {
-                        r.tambahBahan("Data Tersimpan", totalKalori);
-                    }
-
+                if (parts.length >= 3) {
+                    Recipe r = new Recipe(parts[0], parts[1], parts[2]);
+                    // Note: Load bahan secara detail butuh struktur file lebih kompleks (JSON/XML)
+                    // Untuk tugas ini, kita load basic info dulu.
                     daftarResep.add(r);
                 }
             }
-        } catch (Exception e) { // Catch Exception biar kalau format angka salah ga crash
+        } catch (IOException e) {
             System.err.println("[ERROR] Gagal membaca data: " + e.getMessage());
         }
     }
