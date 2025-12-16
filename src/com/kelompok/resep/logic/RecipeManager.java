@@ -12,11 +12,13 @@ import java.util.Optional;
  */
 public class RecipeManager {
     private List<Recipe> daftarResep;
-    private static final String FILE_PATH = "data/resep_data.txt"; // Konstanta agar mudah diubah
+    // Pastikan path ini benar. Kalau error, coba ganti jadi absolute path atau cukup "resep_data.txt"
+    private static final String FILE_PATH = "data/resep_data.txt"; 
 
     public RecipeManager() {
         this.daftarResep = new ArrayList<>();
         ensureDataDirectoryExists();
+        loadData(); // PERBAIKAN 1: Panggil load data saat aplikasi mulai!
     }
 
     // --- CRUD OPERATIONS ---
@@ -24,7 +26,15 @@ public class RecipeManager {
     public void tambahResep(Recipe r) {
         if (r != null) {
             daftarResep.add(r);
-            System.out.println("[INFO] Resep " + r.getNama() + " berhasil ditambahkan.");
+            simpanData(); // PERBAIKAN 2: Auto-save setiap kali nambah resep!
+            System.out.println("[INFO] Resep " + r.getNama() + " berhasil ditambahkan & disimpan.");
+        }
+    }
+
+    public void hapusResep(int index) {
+        if (index >= 0 && index < daftarResep.size()) {
+            daftarResep.remove(index);
+            simpanData(); // Auto-save saat hapus
         }
     }
 
@@ -32,12 +42,11 @@ public class RecipeManager {
         return daftarResep;
     }
 
-    // Fitur Tambahan: Mencari Resep (Java Stream Filter)
     public Recipe cariResep(String nama) {
         Optional<Recipe> result = daftarResep.stream()
                 .filter(r -> r.getNama().equalsIgnoreCase(nama))
                 .findFirst();
-        return result.orElse(null); // Return null jika tidak ketemu
+        return result.orElse(null);
     }
 
     // --- FILE I/O OPERATIONS ---
@@ -50,14 +59,16 @@ public class RecipeManager {
     }
 
     public void simpanData() {
-        // Try-with-resources: Otomatis menutup file stream (Anti Memory Leak)
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Recipe r : daftarResep) {
-                // Format CSV custom: Nama;Kategori;Langkah;TotalKalori
+                // Format: Nama;Kategori;Langkah;TotalKalori
+                // Kita ganti enter (\n) dengan spasi biar file txt tidak rusak
+                String langkahBersih = r.getLangkahPembuatan().replace("\n", " ");
+                
                 String line = String.format("%s;%s;%s;%.2f", 
                     r.getNama(), 
                     r.getKategori(), 
-                    r.getLangkahPembuatan().replace("\n", " "), // Sanitasi newline
+                    langkahBersih,
                     r.hitungTotalKalori()
                 );
                 writer.write(line);
@@ -69,7 +80,6 @@ public class RecipeManager {
         }
     }
 
-    // Placeholder untuk Load Data (bisa dikembangkan nanti)
     public void loadData() {
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
@@ -77,16 +87,27 @@ public class RecipeManager {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // Logika parsing sederhana (split by ;)
                 String[] parts = line.split(";");
-                if (parts.length >= 3) {
-                    Recipe r = new Recipe(parts[0], parts[1], parts[2]);
-                    // Note: Load bahan secara detail butuh struktur file lebih kompleks (JSON/XML)
-                    // Untuk tugas ini, kita load basic info dulu.
+                // Pastikan ada minimal 4 bagian (Nama, Kategori, Langkah, Kalori)
+                if (parts.length >= 4) {
+                    String nama = parts[0];
+                    String kategori = parts[1];
+                    String langkah = parts[2];
+                    double totalKalori = Double.parseDouble(parts[3]);
+
+                    Recipe r = new Recipe(nama, kategori, langkah);
+                    
+                    // PERBAIKAN 3: RESTORE KALORI
+                    // Karena kita tidak menyimpan detail bahan satu per satu di file txt,
+                    // kita masukkan total kalori sebagai satu "bahan gabungan" agar hitungan tetap benar.
+                    if (totalKalori > 0) {
+                        r.tambahBahan("Data Tersimpan", totalKalori);
+                    }
+
                     daftarResep.add(r);
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) { // Catch Exception biar kalau format angka salah ga crash
             System.err.println("[ERROR] Gagal membaca data: " + e.getMessage());
         }
     }
