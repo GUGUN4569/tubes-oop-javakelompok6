@@ -1,27 +1,26 @@
 package com.kelompok.resep.logic;
 
+import com.kelompok.resep.model.InputKosongException;
 import com.kelompok.resep.model.Recipe;
-import com.kelompok.resep.model.Recipe.Ingredient; 
+import com.kelompok.resep.model.Recipe.Ingredient;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RecipeManager {
     private List<Recipe> daftarResep;
-    private static final String FILE_PATH = "data/resep_data.txt"; 
+    private static final String FILE_PATH = "data/resep_data.txt";
 
     public RecipeManager() {
         this.daftarResep = new ArrayList<>();
         ensureDataDirectoryExists();
-        loadData(); 
+        loadData();
     }
-
-    // --- CRUD OPERATIONS ---
 
     public void tambahResep(Recipe r) {
         if (r != null) {
             daftarResep.add(r);
-            simpanData(); 
+            simpanData();
             System.out.println("[INFO] Resep " + r.getNama() + " berhasil disimpan.");
         }
     }
@@ -29,16 +28,13 @@ public class RecipeManager {
     public void hapusResep(int index) {
         if (index >= 0 && index < daftarResep.size()) {
             daftarResep.remove(index);
-            simpanData(); 
-            System.out.println("[INFO] Data ke-" + index + " berhasil dihapus.");
+            simpanData();
         }
     }
 
     public List<Recipe> getAllResep() {
         return daftarResep;
     }
-
-    // --- FILE I/O (SIMPAN & BACA DATA) ---
 
     private void ensureDataDirectoryExists() {
         File file = new File("data");
@@ -48,31 +44,30 @@ public class RecipeManager {
     public void simpanData() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Recipe r : daftarResep) {
-                // 1. Gabungkan detail bahan jadi string
+                // 1. Format Bahan
                 StringBuilder sbBahan = new StringBuilder();
-                ArrayList<Ingredient> listBahan = r.getListBahan(); 
-                
-                for (int i = 0; i < listBahan.size(); i++) {
-                    Ingredient b = listBahan.get(i);
-                    // Pastikan nama bahan juga tidak mengandung titik dua
+                for (Ingredient b : r.getListBahan()) {
                     String namaBahanAman = b.getNamaBahan().replace(":", "-");
-                    sbBahan.append(namaBahanAman).append(":").append(b.getKalori());
-                    if (i < listBahan.size() - 1) sbBahan.append(","); 
+                    sbBahan.append(namaBahanAman).append(":").append(b.getKalori()).append(",");
                 }
-
                 String stringBahan = sbBahan.length() > 0 ? sbBahan.toString() : "Kosong:0";
-                
-                // --- PERBAIKAN PENTING DI SINI (SANITASI INPUT) ---
-                // Mengganti titik koma (;) dengan strip (-) agar tidak merusak format CSV
-                // Mengganti enter (\n) dengan spasi agar tetap satu baris
+
+                // 2. Format Langkah (ArrayList -> String satu baris dipisah | )
+                StringBuilder sbLangkah = new StringBuilder();
+                for (String l : r.getLangkahPembuatan()) {
+                    // Ganti pipe (|) dan enter agar tidak merusak format
+                    sbLangkah.append(l.replace("|", "").replace("\n", " ")).append("|");
+                }
+                String stringLangkah = sbLangkah.length() > 0 ? sbLangkah.toString() : "Belum ada langkah";
+
+                // 3. Sanitasi Nama & Kategori
                 String namaAman = r.getNama().replace(";", "-");
                 String katAman = r.getKategori().replace(";", "-");
-                String langkahAman = r.getLangkahPembuatan().replace("\n", " ").replace(";", ",");
-                
-                // Tulis ke file menggunakan data yang sudah 'aman'
-                String line = String.format("%s;%s;%s;%s", 
-                    namaAman, katAman, langkahAman, stringBahan);
-                
+
+                // Tulis: Nama;Kategori;Langkah1|Langkah2|;Bahan1:Cal,Bahan2:Cal
+                String line = String.format("%s;%s;%s;%s",
+                        namaAman, katAman, stringLangkah, stringBahan);
+
                 writer.write(line);
                 writer.newLine();
             }
@@ -85,34 +80,45 @@ public class RecipeManager {
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
 
-        daftarResep.clear(); 
+        daftarResep.clear();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(";");
-                
+
                 if (parts.length >= 4) {
-                    Recipe r = new Recipe(parts[0], parts[1], parts[2]);
-                    
-                    String[] rawBahan = parts[3].split(",");
-                    for (String rb : rawBahan) {
-                        String[] detail = rb.split(":"); 
-                        if (detail.length == 2) {
-                            try {
-                                String nm = detail[0];
-                                double kal = Double.parseDouble(detail[1]);
-                                if (!nm.equals("Kosong")) {
-                                    r.tambahBahan(nm, kal);
+                    try {
+                        // REVISI: Pakai Constructor 2 Parameter
+                        Recipe r = new Recipe(parts[0], parts[1]);
+
+                        // 1. Load Langkah (Split by |)
+                        String[] steps = parts[2].split("\\|");
+                        for (String s : steps) {
+                            if (!s.isEmpty()) r.tambahLangkah(s);
+                        }
+
+                        // 2. Load Bahan
+                        String[] rawBahan = parts[3].split(",");
+                        for (String rb : rawBahan) {
+                            String[] detail = rb.split(":");
+                            if (detail.length == 2) {
+                                try {
+                                    String nm = detail[0];
+                                    double kal = Double.parseDouble(detail[1]);
+                                    if (!nm.equals("Kosong")) {
+                                        r.tambahBahan(nm, kal);
+                                    }
+                                } catch (NumberFormatException e) {
+                                    // Ignore bad data
                                 }
-                            } catch (Exception e) { 
-                                // --- PERBAIKAN DI SINI (LOGGING) ---
-                                // Jangan dibiarkan kosong, print error biar ketahuan kalau ada data korup
-                                System.err.println("[WARNING] Gagal parse bahan '" + rb + "': " + e.getMessage());
                             }
                         }
+                        daftarResep.add(r);
+                        
+                    } catch (InputKosongException e) {
+                        System.err.println("Skip data rusak: " + e.getMessage());
                     }
-                    daftarResep.add(r);
                 }
             }
         } catch (IOException e) {
