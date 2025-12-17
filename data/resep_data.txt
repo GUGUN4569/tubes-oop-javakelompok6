@@ -1,0 +1,2 @@
+masak ikan asam pedas;Sarapan (Pagi);1. siapkan ikan 2. ambil asem aseman;ikan:200.0,asem aseman:5.0
+ayam;Makan Malam;ayam;ibi:900.0
