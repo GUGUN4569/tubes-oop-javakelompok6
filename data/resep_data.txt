@@ -1,3 +1,0 @@
-ayam;Makan Malam;ayam|;ibi:900.0,
-ikan;Sarapan (Pagi);siapin wajan|;ikan:100.0,
-ayam kfc;Makan Siang;deep fried|;paha ayam:500.0,
