@@ -1,1 +1,2 @@
 ikan;Sarapan (Pagi);1|2|34|5|5|;ikan:200.0,ayam:100.0,
+nasi;Sarapan (Pagi);goreng|;1. nasi:100.0,
