@@ -47,16 +47,18 @@ public class RecipeManager {
                 // 1. Format Bahan
                 StringBuilder sbBahan = new StringBuilder();
                 for (Ingredient b : r.getListBahan()) {
-                    String namaBahanAman = b.getNamaBahan().replace(":", "-");
+                    // Hapus karakter : atau ; agar tidak merusak format pemisah
+                    String namaBahanAman = b.getNamaBahan().replace(":", "-").replace(";", "");
                     sbBahan.append(namaBahanAman).append(":").append(b.getKalori()).append(",");
                 }
                 String stringBahan = sbBahan.length() > 0 ? sbBahan.toString() : "Kosong:0";
 
-                // 2. Format Langkah (ArrayList -> String satu baris dipisah | )
+                // 2. Format Langkah
+                // Kita gabungkan langkah dengan pemisah pipe (|).
+                // Kita juga hapus newline (\n) di dalam teks agar tidak membuat baris baru di file TXT.
                 StringBuilder sbLangkah = new StringBuilder();
                 for (String l : r.getLangkahPembuatan()) {
-                    // Ganti pipe (|) dan enter agar tidak merusak format
-                    sbLangkah.append(l.replace("|", "").replace("\n", " ")).append("|");
+                    sbLangkah.append(l.replace("|", "").replace(";", "").replace("\n", " ")).append("|");
                 }
                 String stringLangkah = sbLangkah.length() > 0 ? sbLangkah.toString() : "Belum ada langkah";
 
@@ -64,7 +66,7 @@ public class RecipeManager {
                 String namaAman = r.getNama().replace(";", "-");
                 String katAman = r.getKategori().replace(";", "-");
 
-                // Tulis: Nama;Kategori;Langkah1|Langkah2|;Bahan1:Cal,Bahan2:Cal
+                // Format simpan: Nama;Kategori;Langkah1|Langkah2|;Bahan1:Cal,Bahan2:Cal
                 String line = String.format("%s;%s;%s;%s",
                         namaAman, katAman, stringLangkah, stringBahan);
 
@@ -89,13 +91,15 @@ public class RecipeManager {
 
                 if (parts.length >= 4) {
                     try {
-                        // REVISI: Pakai Constructor 2 Parameter
                         Recipe r = new Recipe(parts[0], parts[1]);
 
                         // 1. Load Langkah (Split by |)
-                        String[] steps = parts[2].split("\\|");
-                        for (String s : steps) {
-                            if (!s.isEmpty()) r.tambahLangkah(s);
+                        // Cek apakah string langkah valid dan bukan placeholder
+                        if (!parts[2].equals("Belum ada langkah")) {
+                            String[] steps = parts[2].split("\\|");
+                            for (String s : steps) {
+                                if (!s.trim().isEmpty()) r.tambahLangkah(s);
+                            }
                         }
 
                         // 2. Load Bahan
@@ -110,7 +114,7 @@ public class RecipeManager {
                                         r.tambahBahan(nm, kal);
                                     }
                                 } catch (NumberFormatException e) {
-                                    // Ignore bad data
+                                    // Ignore jika data kalori bukan angka
                                 }
                             }
                         }

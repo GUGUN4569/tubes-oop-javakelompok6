@@ -4,15 +4,13 @@ import java.util.ArrayList;
 
 public class Recipe extends FoodItem implements Nutrizable {
     
-    // REVISI: Menggunakan ArrayList agar langkah bisa di-looping (Sesuai syarat: langkah perulangan)
+    // Menggunakan ArrayList untuk menyimpan banyak langkah dan bahan
     private ArrayList<String> langkahPembuatan;
     private ArrayList<Ingredient> listBahan; 
 
-    // REVISI: Constructor kini melempar 'InputKosongException'
     public Recipe(String nama, String kategori) throws InputKosongException {
         super(nama, kategori);
         
-        // Validasi Input Kosong (Sesuai syarat)
         if (nama == null || nama.trim().isEmpty()) {
             throw new InputKosongException("Nama resep tidak boleh kosong!");
         }
@@ -41,7 +39,6 @@ public class Recipe extends FoodItem implements Nutrizable {
         listBahan.add(new Ingredient(nama, kalori));
     }
 
-    // Method baru untuk menambah langkah satu per satu
     public void tambahLangkah(String langkah) {
         langkahPembuatan.add(langkah);
     }
@@ -50,7 +47,7 @@ public class Recipe extends FoodItem implements Nutrizable {
     public double hitungTotalKalori() {
         double total = 0;
         for (Ingredient bahan : listBahan) {
-            total += bahan.getKalori(); // Syarat: Operator aritmatika
+            total += bahan.getKalori(); 
         }
         return total;
     }
@@ -63,15 +60,12 @@ public class Recipe extends FoodItem implements Nutrizable {
     @Override
     public void tampilkanInfo() {
         System.out.println("Resep: " + getNama());
-        
-        // Syarat: Langkah (Perulangan)
         System.out.println("Langkah-langkah:");
         for (int i = 0; i < langkahPembuatan.size(); i++) {
             System.out.println((i + 1) + ". " + langkahPembuatan.get(i));
         }
     }
 
-    // Getter untuk GUI Temanmu
     public ArrayList<String> getLangkahPembuatan() { return langkahPembuatan; }
     public ArrayList<Ingredient> getListBahan() { return listBahan; }
 }
