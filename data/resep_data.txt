@@ -1,3 +1,5 @@
-Nasi Goreng ;Sarapan (Pagi);1. siapkan nasi|2. siapkan kecap|;Nasi :100.0,Kecap :75.0,
 Nasi goreng ;Sarapan (Pagi);siapkan nasi|siapkan kecap|panaskan minyak|;nasi:100.0,minyak:150.0,kecap:50.0,
 Nasi Goreng;Sarapan (Pagi);Siapkan nasi|siapkan kecap|;Nasi:100.0,Kecap:50.0,
+mie goreng;Sarapan (Pagi);rebus aer tuang mie|;mie :50.0,
+mie goreng;Sarapan (Pagi);rebus aer tuang mie|;mie:1000.0,
+nasi uduk;Sarapan (Pagi);buat nasi|aduk semuaanya|nasi 3|;nasi:100.0,

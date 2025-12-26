@@ -31,6 +31,13 @@ public class RecipeManager {
             simpanData();
         }
     }
+    //menambahkan update
+    public void updateResep(int index, Recipe resep) {
+        if (index >= 0 && index < daftarResep.size()) {
+            daftarResep.set(index, resep);
+            simpanData();
+        }
+    }
 
     public List<Recipe> getAllResep() {
         return daftarResep;
@@ -38,7 +45,8 @@ public class RecipeManager {
 
     private void ensureDataDirectoryExists() {
         File file = new File("data");
-        if (!file.exists()) file.mkdir();
+        if (!file.exists())
+            file.mkdir();
     }
 
     public void simpanData() {
@@ -55,7 +63,8 @@ public class RecipeManager {
 
                 // 2. Format Langkah
                 // Kita gabungkan langkah dengan pemisah pipe (|).
-                // Kita juga hapus newline (\n) di dalam teks agar tidak membuat baris baru di file TXT.
+                // Kita juga hapus newline (\n) di dalam teks agar tidak membuat baris baru di
+                // file TXT.
                 StringBuilder sbLangkah = new StringBuilder();
                 for (String l : r.getLangkahPembuatan()) {
                     sbLangkah.append(l.replace("|", "").replace(";", "").replace("\n", " ")).append("|");
@@ -80,7 +89,8 @@ public class RecipeManager {
 
     public void loadData() {
         File file = new File(FILE_PATH);
-        if (!file.exists()) return;
+        if (!file.exists())
+            return;
 
         daftarResep.clear();
 
@@ -98,7 +108,8 @@ public class RecipeManager {
                         if (!parts[2].equals("Belum ada langkah")) {
                             String[] steps = parts[2].split("\\|");
                             for (String s : steps) {
-                                if (!s.trim().isEmpty()) r.tambahLangkah(s);
+                                if (!s.trim().isEmpty())
+                                    r.tambahLangkah(s);
                             }
                         }
 
@@ -119,7 +130,7 @@ public class RecipeManager {
                             }
                         }
                         daftarResep.add(r);
-                        
+
                     } catch (InputKosongException e) {
                         System.err.println("Skip data rusak: " + e.getMessage());
                     }
